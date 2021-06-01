@@ -9,9 +9,9 @@ const ONBOARDING_STATE = {
 };
 
 const EXTENSION_DOWNLOAD_URL = {
-  CHROME: 'https://chrome.google.com/webstore/detail/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn',
-  FIREFOX: 'https://addons.mozilla.org/firefox/addon/ether-metamask/',
-  DEFAULT: 'https://metamask.io',
+  CHROME: 'https://chrome.google.com/webstore/detail/starmask/mfhbebgoclkghebffdldpobeajmbecfk',
+  FIREFOX: 'https://starcoin.org',
+  DEFAULT: 'https://starcoin.org',
 };
 
 // sessionStorage key
@@ -34,10 +34,10 @@ export default class Onboarding {
 
   private state: keyof typeof ONBOARDING_STATE;
 
-  constructor ({ forwarderOrigin = 'https://fwd.metamask.io', forwarderMode = Onboarding.FORWARDER_MODE.INJECT } = {}) {
+  constructor({ forwarderOrigin = 'https://fwd-starmask.starcoin.org', forwarderMode = Onboarding.FORWARDER_MODE.INJECT } = {}) {
     this.forwarderOrigin = forwarderOrigin;
     this.forwarderMode = forwarderMode;
-    this.state = Onboarding.isMetaMaskInstalled() ?
+    this.state = Onboarding.isStarMaskInstalled() ?
       ONBOARDING_STATE.INSTALLED :
       ONBOARDING_STATE.NOT_INSTALLED;
 
@@ -62,13 +62,13 @@ export default class Onboarding {
     }
   }
 
-  _onMessage (event: MessageEvent) {
+  _onMessage(event: MessageEvent) {
     if (event.origin !== this.forwarderOrigin) {
       // Ignoring non-forwarder message
       return undefined;
     }
 
-    if (event.data.type === 'metamask:reload') {
+    if (event.data.type === 'starmask:reload') {
       return this._onMessageFromForwarder(event);
     }
 
@@ -76,27 +76,27 @@ export default class Onboarding {
     return undefined;
   }
 
-  _onMessageUnknownStateError (state: never): never {
+  _onMessageUnknownStateError(state: never): never {
     throw new Error(`Unknown state: '${state}'`);
   }
 
-  async _onMessageFromForwarder (event: MessageEvent) {
+  async _onMessageFromForwarder(event: MessageEvent) {
     switch (this.state) {
       case ONBOARDING_STATE.RELOADING:
         console.debug('Ignoring message while reloading');
         break;
       case ONBOARDING_STATE.NOT_INSTALLED:
-        console.debug('Reloading now to register with MetaMask');
+        console.debug('Reloading now to register with StarMask');
         this.state = ONBOARDING_STATE.RELOADING;
         location.reload();
         break;
 
       case ONBOARDING_STATE.INSTALLED:
-        console.debug('Registering with MetaMask');
+        console.debug('Registering with StarMask');
         this.state = ONBOARDING_STATE.REGISTERING;
         await Onboarding._register();
         this.state = ONBOARDING_STATE.REGISTERED;
-        (event.source as Window).postMessage({ type: 'metamask:registrationCompleted' }, event.origin);
+        (event.source as Window).postMessage({ type: 'starmask:registrationCompleted' }, event.origin);
         this.stopOnboarding();
         break;
       case ONBOARDING_STATE.REGISTERING:
@@ -111,9 +111,9 @@ export default class Onboarding {
   }
 
   /**
-   * Starts onboarding by opening the MetaMask download page and the Onboarding forwarder
+   * Starts onboarding by opening the StarMask download page and the Onboarding forwarder
    */
-  startOnboarding () {
+  startOnboarding() {
     sessionStorage.setItem(REGISTRATION_IN_PROGRESS, 'true');
     this._openDownloadPage();
     this._openForwarder();
@@ -125,7 +125,7 @@ export default class Onboarding {
    * Typically this function is not necessary, but it can be useful for cases where
    * onboarding completes before the forwarder has registered.
    */
-  stopOnboarding () {
+  stopOnboarding() {
     if (sessionStorage.getItem(REGISTRATION_IN_PROGRESS) === 'true') {
       if (this.forwarderMode === Onboarding.FORWARDER_MODE.INJECT) {
         console.debug('Removing forwarder');
@@ -135,7 +135,7 @@ export default class Onboarding {
     }
   }
 
-  _openForwarder () {
+  _openForwarder() {
     if (this.forwarderMode === Onboarding.FORWARDER_MODE.OPEN_TAB) {
       window.open(this.forwarderOrigin, '_blank');
     } else {
@@ -143,24 +143,24 @@ export default class Onboarding {
     }
   }
 
-  _openDownloadPage () {
+  _openDownloadPage() {
     window.open(this.downloadUrl, '_blank');
   }
 
   /**
-   * Checks whether the MetaMask extension is installed
+   * Checks whether the StarMask extension is installed
    */
-  static isMetaMaskInstalled () {
-    return Boolean((window as any).ethereum && (window as any).ethereum.isMetaMask);
+  static isStarMaskInstalled() {
+    return Boolean((window as any).starcoin && (window as any).starcoin.isStarMask);
   }
 
-  static _register () {
-    return (window as any).ethereum.request({
+  static _register() {
+    return (window as any).starcoin.request({
       method: 'wallet_registerOnboarding',
     });
   }
 
-  static _injectForwarder (forwarderOrigin: string) {
+  static _injectForwarder(forwarderOrigin: string) {
     const container = document.body;
     const iframe = document.createElement('iframe');
     iframe.setAttribute('height', '0');
@@ -171,11 +171,11 @@ export default class Onboarding {
     container.insertBefore(iframe, container.children[0]);
   }
 
-  static _removeForwarder () {
+  static _removeForwarder() {
     document.getElementById(FORWARDER_ID)?.remove();
   }
 
-  static _detectBrowser () {
+  static _detectBrowser() {
     const browserInfo = Bowser.parse(window.navigator.userAgent);
     if (browserInfo.browser.name === 'Firefox') {
       return 'FIREFOX';
