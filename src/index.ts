@@ -1,4 +1,4 @@
-import * as Bowser from 'bowser';
+import Bowser from 'bowser';
 
 const ONBOARDING_STATE = {
   INSTALLED: 'INSTALLED' as const,
@@ -72,12 +72,12 @@ export default class Onboarding {
       return this._onMessageFromForwarder(event);
     }
 
-    console.debug(`Unknown message from '${event.origin}' with data ${JSON.stringify(event.data)}`);
+    console.debug(`Unknown message from '${ event.origin }' with data ${ JSON.stringify(event.data) }`);
     return undefined;
   }
 
   _onMessageUnknownStateError(state: never): never {
-    throw new Error(`Unknown state: '${state}'`);
+    throw new Error(`Unknown state: '${ state }'`);
   }
 
   async _onMessageFromForwarder(event: MessageEvent) {

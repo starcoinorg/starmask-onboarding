@@ -2,6 +2,7 @@
   "compilerOptions": {
     "moduleResolution": "Node",
     "declaration": true,
+    "esModuleInterop": true,
     "module": "ES6",
     "sourceMap": true,
     "strict": true,
